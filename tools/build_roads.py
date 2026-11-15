@@ -6,6 +6,7 @@ A road with a "gpx" file uses that track instead.
 
     python tools/build_roads.py             # rebuild every road
     python tools/build_roads.py namanga-meshanani kimana-chyulu-gate   # rebuild some, keep the rest
+    python tools/build_roads.py --src other-src.json --out other.geojson  # different files
 
 Uses only the Python standard library. Prints a warning when a route is much longer than the
 straight line between its waypoints, which usually means it took a detour: add a via point.
@@ -88,7 +89,7 @@ def main(only):
             continue
         try:
             if road.get("gpx"):
-                coords, km = read_gpx(ROOT / "data" / road["gpx"])
+                coords, km = read_gpx(SRC.parent / road["gpx"])
                 props["source"] = "gpx"
             else:
                 coords, km = route_osrm(road["waypoints"])
@@ -114,8 +115,18 @@ def main(only):
         "features": features,
     }
     OUT.write_text(json.dumps(out, ensure_ascii=False, separators=(",", ":")), encoding="utf-8")
-    print(f"Wrote {OUT.relative_to(ROOT)} with {len(features)} roads.")
+    print(f"Wrote {OUT} with {len(features)} roads.")
 
 
 if __name__ == "__main__":
-    main(set(sys.argv[1:]))
+    args = sys.argv[1:]
+    for flag in ("--src", "--out"):
+        if flag in args:
+            i = args.index(flag)
+            path = Path(args[i + 1]).resolve()
+            if flag == "--src":
+                SRC = path
+            else:
+                OUT = path
+            del args[i:i + 2]
+    main(set(args))

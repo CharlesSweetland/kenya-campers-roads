@@ -278,7 +278,10 @@
         r.trackLayer = t;
       });
     });
-    map.fitBounds(L.featureGroup(roads.map((r) => r.layer)).getBounds(), { padding: [20, 20] });
+    // ?view=lat,lon,zoom opens the map on a chosen area (handy for sharing a region).
+    const view = (new URLSearchParams(location.search).get("view") || "").split(",").map(Number);
+    if (view.length === 3 && view.every(isFinite)) map.setView([view[0], view[1]], view[2]);
+    else map.fitBounds(L.featureGroup(roads.map((r) => r.layer)).getBounds(), { padding: [20, 20] });
     // Draw reported roads above unreported ones.
     roads.filter((r) => r.reports.length).forEach((r) => r.layer.bringToFront());
 
