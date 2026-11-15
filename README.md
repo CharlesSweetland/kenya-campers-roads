@@ -4,6 +4,8 @@ A free community map of road conditions in Kenya for campers and overlanders. Fo
 
 Reports come from members of the Kenya Campers community. They are anonymous: no names, phone numbers or usernames appear anywhere on the map.
 
+**Live map:** https://charlessweetland.github.io/kenya-campers-roads/
+
 > **Prototype.** The map holds only the maintainer's own notes for now. Updates from the wider group will be added only with the community's permission (see [docs/PRIVACY.md](docs/PRIVACY.md)).
 
 ## Using the map

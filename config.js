@@ -9,7 +9,7 @@ window.KCR_CONFIG = {
   formUrl: "",
 
   // Link to this GitHub repository, shown in the footer.
-  repoUrl: "",
+  repoUrl: "https://github.com/CharlesSweetland/kenya-campers-roads",
 
   // Reports older than this many days are faded and marked "may be out of date".
   staleDays: 90

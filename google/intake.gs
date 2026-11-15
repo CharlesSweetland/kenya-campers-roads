@@ -13,9 +13,8 @@
  * responses tab is ever public. See docs/SETUP.md for the step-by-step.
  */
 
-// After the site is on GitHub Pages, set this so refreshRoadChoices() can read the road list, e.g.
-// "https://<your-github-name>.github.io/kenya-campers-roads/data/roads.geojson"
-const ROADS_URL = "";
+// Live road list, read by refreshRoadChoices(). Change it if you fork or move the site.
+const ROADS_URL = "https://charlessweetland.github.io/kenya-campers-roads/data/roads.geojson";
 
 // Road names used for the dropdown until ROADS_URL is set. Must match `name` in data/roads.geojson.
 const DEFAULT_ROADS = [
