@@ -62,6 +62,23 @@
     }).filter(Boolean);
   }
 
+  // Google "encoded polyline" (precision 5) → [[lat, lon], ...]. Used for GPS tracks.
+  function decodePolyline(str) {
+    const pts = []; let i = 0, lat = 0, lon = 0;
+    try {
+      while (i < str.length) {
+        for (const k of [0, 1]) {
+          let shift = 0, result = 0, b;
+          do { b = str.charCodeAt(i++) - 63; result |= (b & 0x1f) << shift; shift += 5; } while (b >= 0x20 && i <= str.length);
+          const d = result & 1 ? ~(result >> 1) : result >> 1;
+          if (k === 0) lat += d; else lon += d;
+        }
+        pts.push([lat / 1e5, lon / 1e5]);
+      }
+    } catch (e) { return []; }
+    return pts.filter((p) => Math.abs(p[0]) <= 90 && Math.abs(p[1]) <= 180);
+  }
+
   function loadCsv(url) {
     return new Promise((resolve) => {
       Papa.parse(url, {
@@ -159,11 +176,12 @@
       const facts = [r.section && "Section: " + r.section, r.vehicle && "Vehicle: " + r.vehicle, r.weather && "Weather: " + r.weather]
         .filter(Boolean).map(esc).join(" · ");
       const imgs = r.photos.map((u) => '<a href="' + esc(u) + '" target="_blank" rel="noopener"><img loading="lazy" src="' + esc(u) + '" alt="Photo of ' + esc(road.name) + '"></a>').join("");
+      const gps = r.track.length > 1 ? '<div class="facts">📍 GPS track shared (dotted line on the map)</div>' : "";
       return '<article class="report"><div class="head">' + chip(r.condition) +
         "<strong>" + esc(fmtDate(r.date)) + "</strong><span>" + esc(ago(r.date)) + "</span>" +
         (r.example ? '<span class="stale">Example only</span>' : "") + "</div>" +
         (facts ? '<div class="facts">' + facts + "</div>" : "") +
-        (r.text ? "<p>" + esc(r.text) + "</p>" : "") + imgs + "</article>";
+        (r.text ? "<p>" + esc(r.text) + "</p>" : "") + gps + imgs + "</article>";
     }).join("");
     const add = CFG.formUrl ? ' <a href="' + esc(CFG.formUrl) + '" target="_blank" rel="noopener">Add an update for this road</a>' : "";
     $("detail").innerHTML =
@@ -217,7 +235,18 @@
     roads.forEach((r) => { byKey.set(norm(r.id), r); byKey.set(norm(r.name), r); });
 
     rows.forEach((row) => {
-      const road = byKey.get(norm(row.road)) || byKey.get(norm(row.road_id));
+      const track = row.track ? decodePolyline(String(row.track).trim()) : [];
+      let road = byKey.get(norm(row.road)) || byKey.get(norm(row.road_id));
+      if (!road && track.length > 1) {
+        // A road that isn't on the list yet, but someone shared a GPS track: add it from the track.
+        const name = (row.section || "").trim() || "Unlisted road";
+        road = byKey.get(norm("track " + name));
+        if (!road) {
+          road = { id: "track-" + roads.length, name: name, region: "Added from a GPS track", surface: "", reports: [],
+            feature: { type: "Feature", properties: {}, geometry: { type: "LineString", coordinates: track.map((p) => [p[1], p[0]]) } } };
+          roads.push(road); byKey.set(norm("track " + name), road);
+        }
+      }
       if (!road) { if (row.road) console.warn("Update for unknown road:", row.road); return; }
       road.reports.push({
         date: parseDate(row.date_driven),
@@ -227,6 +256,7 @@
         weather: (row.weather || "").trim(),
         text: (row.update || "").trim(),
         photos: photoUrls(row.photo_url),
+        track: track,
         example: !!row._example
       });
     });
@@ -240,6 +270,13 @@
         (l ? esc(CONDITIONS[l.condition].label) + " · last driven " + esc(ago(l.date) || "date unknown") : "No reports yet"),
         { sticky: true });
       road.layer.on("click", () => select(road.id, false));
+      // GPS tracks people shared for this road, drawn as thin lines on top.
+      road.reports.filter((r) => r.track.length > 1).forEach((r) => {
+        const t = L.polyline(r.track, { color: css("--c-" + r.condition) || "#999", weight: 2.5, opacity: 0.9, dashArray: "2 5" })
+          .bindTooltip("GPS track · " + esc(fmtDate(r.date)), { sticky: true }).addTo(map);
+        t.on("click", () => select(road.id, false));
+        r.trackLayer = t;
+      });
     });
     map.fitBounds(L.featureGroup(roads.map((r) => r.layer)).getBounds(), { padding: [20, 20] });
     // Draw reported roads above unreported ones.

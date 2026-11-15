@@ -26,6 +26,15 @@ Google doesn't let scripts create file-upload questions, so add this one yoursel
 3. Allow only **Image**, maximum **3** files, maximum size **10 MB**.
 4. Make it optional.
 
+Then add a second file-upload question for GPS tracks:
+
+1. Title exactly: `GPS track (GPX file)`.
+2. Turn **off** "Allow only specific file types" (Google has no GPX option), maximum **1** file, **10 MB**.
+3. Help text: "Optional. Export your drive as a GPX from your GPS app (e.g. Gaia, OsmAnd, Strava). The first and last kilometre are cut off before anything is published."
+4. Make it optional.
+
+GPX files are never shared publicly. When you approve an update, the script reads the file, keeps only the coordinates, trims 1 km off each end, and puts a simplified line in the Public tab. If the road was "Other", the track appears on the map as a new road, named from the "Which section?" answer.
+
 File-upload questions make people sign in to Google to submit. Their name is **not** published: the script renames each photo before sharing it, and the map shows only the picture. If sign-in is a barrier for your members, you can skip the photo question. Everything else works without it.
 
 ## 4. Publish the Public tab
@@ -55,18 +64,16 @@ Each new response arrives in the responses tab with an unticked **Approved** box
 
 1. Read the update. Remove any names, phone numbers or personal details from the text cell. The script also strips phone numbers and emails automatically, but a person should check.
 2. Look at any photos (the links are in the "Photos" column). Reject or crop any with faces or number plates.
+   For an "Other" road with a GPS track, make sure "Which section?" holds a sensible road name, because that's what the map will call it.
 3. Tick **Approved**. The Public tab rebuilds automatically, and the map picks it up on the next page load. Google can take up to 5 minutes to refresh a published CSV.
 
 To take a report down, untick **Approved**.
 
-If a report is for a road that's not on the list ("Other"), add the road to `data/roads.geojson`, then edit the response's road cell to the new road's exact name.
+If a report is for a road that's not on the list ("Other"), add the road to `data/roads-src.json` and rebuild, then edit the response's road cell to the new road's exact name.
 
 ## 7. Keeping the road list in sync
 
-When you add roads to `data/roads.geojson`:
-
-1. Set `ROADS_URL` at the top of the Apps Script to `https://<your-github-name>.github.io/kenya-campers-roads/data/roads.geojson`.
-2. Run `refreshRoadChoices`. The form drop-down now matches the map.
+After you add roads (see "Adding or fixing a road" in the README) and the site has updated, run `refreshRoadChoices` in the Apps Script. The form drop-down now matches the map. `ROADS_URL` at the top of the script points at the live road list. Change it only if you move the site.
 
 ## Sharing admin duties
 

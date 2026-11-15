@@ -35,16 +35,29 @@ data/roads.geojson  +  data/updates.csv  ─────────────
 |---|---|
 | `index.html`, `assets/` | The map page (plain HTML/JS, Leaflet + OpenStreetMap, no build step) |
 | `config.js` | Links to the Google Sheet CSV and the form |
-| `data/roads.geojson` | The list of roads and their (approximate) lines |
+| `data/roads-src.json` | The list of roads: name, region and the waypoints each one passes through |
+| `data/roads.geojson` | Generated road lines that follow the real OpenStreetMap roads (don't edit by hand) |
 | `data/updates.csv` | Updates kept directly in the repo |
 | `data/sample-updates.csv` | Made-up example entries, shown only with `?demo=1` |
+| `tools/build_roads.py` | Rebuilds `roads.geojson` from `roads-src.json` |
+| `tools/gpx_to_track.py` | Turns a GPX file into a trimmed track for `updates.csv` |
 | `google/intake.gs` | Apps Script that builds the form and sheet and handles moderation |
 | `docs/SETUP.md` | Step-by-step setup for the form, sheet and GitHub Pages |
 | `docs/PRIVACY.md` | How reports are anonymised and how to ask for removal |
 
 ### Adding or fixing a road
 
-Edit `data/roads.geojson` (easiest at [geojson.io](https://geojson.io): paste the file in, draw or adjust the line, copy it back). Each road needs a unique `id` and a `name`. Then run `refreshRoadChoices()` in the Apps Script so the form dropdown updates.
+Roads follow the real road network from OpenStreetMap. To add or fix one:
+
+1. Edit `data/roads-src.json`. Give the road a unique `id`, a `name`, and `waypoints`: the start, the end, and any via points needed to keep the route on the right road (`[lat, lon]`, easy to copy from Google Maps or openstreetmap.org).
+2. Run `python tools/build_roads.py` (or `python tools/build_roads.py <road-id>` for just that road). It routes the road along OSM roads and warns you if the route looks like a detour.
+3. Check it on the map, commit, then run `refreshRoadChoices()` in the Apps Script so the form drop-down matches.
+
+For a track that isn't in OpenStreetMap, put a trimmed GPX in `data/tracks/` and give the road `"gpx": "tracks/<file>.gpx"` instead of waypoints. If the road itself is missing from OSM, consider adding it at [openstreetmap.org](https://www.openstreetmap.org) so everyone benefits.
+
+### GPS tracks
+
+People can attach a GPX file to an update, through the form or by a maintainer running `tools/gpx_to_track.py`. The map draws it as a dotted line over the road. If the update is for a road that isn't on the list yet, the track becomes a new road on the map. Only coordinates are kept, and the first and last kilometre are cut off so nobody's home or campsite shows.
 
 ### Running it locally
 
@@ -60,4 +73,4 @@ If a report mentions you or you'd like it taken down, open an issue in this repo
 
 ## Licence
 
-Code: MIT. Road reports: [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/), credited to "Kenya Campers community". Map tiles © OpenStreetMap contributors.
+Code: MIT. Road reports: [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/), credited to "Kenya Campers community". Map tiles and road geometry © OpenStreetMap contributors (ODbL), routed with OSRM.

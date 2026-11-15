@@ -13,6 +13,7 @@ The map exists to share what roads are like, not who drove them. These rules app
 - Who submitted a report. Form submissions don't collect email addresses. If you upload a photo Google asks you to sign in, but your name is removed from the file before it is shared.
 - Photos showing identifiable faces or number plates.
 - Live locations. A report says a road was driven on a date, never where someone is now or where they're camping tonight.
+- Full GPS tracks. If you share a GPX file, only a simplified line is published, with the first and last kilometre removed so it never shows where you started or stopped. Times, speeds, device names and the file itself stay private.
 
 ## Where reports come from
 

@@ -16,16 +16,16 @@
 // Live road list, read by refreshRoadChoices(). Change it if you fork or move the site.
 const ROADS_URL = "https://charlessweetland.github.io/kenya-campers-roads/data/roads.geojson";
 
-// Road names used for the dropdown until ROADS_URL is set. Must match `name` in data/roads.geojson.
+// Fallback road names if ROADS_URL can't be reached. Must match `name` in data/roads-src.json.
 const DEFAULT_ROADS = [
-  "Namanga – Meshanani Gate (Amboseli)",
-  "Emali – Kimana – Loitokitok (C102)",
-  "Kimana – Chyulu Gate, Tsavo West (C103)",
+  "Namanga – Meshanani Gate, Amboseli (B54)",
+  "Emali – Kimana – Loitokitok",
+  "Kimana – Chyulu Gate, Tsavo West (B54, formerly C103)",
   "Nairobi – Mombasa Highway (A8)",
   "Mariakani – Kinango – Kwale – Ukunda (back road to Diani)",
   "Voi – Wundanyi (Taita Hills)",
   "Machakos – Wote – Makindu",
-  "Kiserian – Olorgesailie – Lake Magadi (C58)",
+  "Kiserian – Olorgesailie – Lake Magadi",
   "Mai Mahiu – Suswa (B3)",
   "Narok – Sekenani Gate (Maasai Mara)",
   "Bahati – Subukia",
@@ -46,12 +46,13 @@ const Q = {
   weather: "Weather or recent rain",
   update: "What should other campers know?",
   photos: "Photos",               // add this file-upload question by hand (see SETUP.md)
+  gpx: "GPS track (GPX file)",    // add this file-upload question by hand (see SETUP.md)
   consent: "Permission to publish"
 };
 const CONSENT_YES = "Yes, publish this anonymously on the Kenya Road Reports map";
 const APPROVED = "Approved";
 const PUBLIC_SHEET = "Public";
-const PUBLIC_HEADERS = ["date_driven", "road", "section", "condition", "vehicle", "weather", "update", "photo_url", "source"];
+const PUBLIC_HEADERS = ["date_driven", "road", "section", "condition", "vehicle", "weather", "update", "photo_url", "track", "source"];
 
 /* ------------------------------------------------------------------ setup */
 
@@ -69,7 +70,7 @@ function setup() {
   form.setConfirmationMessage("Thank you! Your update will appear on the map once a moderator has checked it.");
 
   form.addListItem().setTitle(Q.road).setRequired(true)
-    .setChoiceValues(DEFAULT_ROADS.concat([OTHER_ROAD]));
+    .setChoiceValues(roadNames_().concat([OTHER_ROAD]));
   form.addTextItem().setTitle(Q.section);
   form.addDateItem().setTitle(Q.date).setRequired(true);
   form.addMultipleChoiceItem().setTitle(Q.condition).setRequired(true).setChoiceValues([
@@ -141,6 +142,7 @@ function publishPublic() {
 
     const date = row[idx(Q.date)];
     const photos = idx(Q.photos) >= 0 ? preparePhotos_(row[idx(Q.photos)], i + 2) : "";
+    const track = idx(Q.gpx) >= 0 ? gpxToTrack_(row[idx(Q.gpx)]) : "";
     out.push([
       date instanceof Date ? Utilities.formatDate(date, tz, "yyyy-MM-dd") : String(date || ""),
       clean_(row[idx(Q.road)]),
@@ -150,6 +152,7 @@ function publishPublic() {
       clean_(row[idx(Q.weather)]),
       clean_(row[idx(Q.update)]),
       photos,
+      track,
       "Form"
     ]);
   });
@@ -179,12 +182,90 @@ function preparePhotos_(cell, rowNumber) {
   }).filter(Boolean).join(" ");
 }
 
+/* ------------------------------------------------------------ GPS tracks */
+
+const TRACK_TRIM_KM = 1;        // cut this much off each end so homes and campsites never show
+const TRACK_MIN_KM = 3;         // tracks shorter than this (after trimming) are dropped
+const TRACK_MAX_CHARS = 40000;  // stay under Google Sheets' 50,000-character cell limit
+
+// Reads an uploaded GPX file (kept private in Drive) and returns a trimmed, simplified line as a
+// Google "encoded polyline" string. Only coordinates are kept: no times, names or device data.
+function gpxToTrack_(cell) {
+  const url = String(cell || "").split(/[\s,]+/).filter(Boolean)[0];
+  if (!url) return "";
+  const id = (url.match(/[?&]id=([\w-]+)/) || url.match(/\/d\/([\w-]+)/) || [])[1];
+  if (!id) return "";
+  try {
+    const xml = DriveApp.getFileById(id).getBlob().getDataAsString();
+    let pts = [];
+    const re = /<(?:trkpt|rtept)\b([^>]*)>/g;
+    let m;
+    while ((m = re.exec(xml))) {
+      const lat = parseFloat((m[1].match(/lat\s*=\s*["']([-\d.]+)/) || [])[1]);
+      const lon = parseFloat((m[1].match(/lon\s*=\s*["']([-\d.]+)/) || [])[1]);
+      if (isFinite(lat) && isFinite(lon)) pts.push([lat, lon]);
+    }
+    pts = trimEnds_(pts, TRACK_TRIM_KM);
+    if (trackKm_(pts) < TRACK_MIN_KM) return "";
+    let tol = 0.0002, enc = "";
+    do { enc = encodePolyline_(simplify_(pts, tol)); tol *= 2; } while (enc.length > TRACK_MAX_CHARS);
+    return enc;
+  } catch (err) {
+    Logger.log("GPX " + id + " not read: " + err);
+    return "";
+  }
+}
+
+function km_(a, b) {
+  const r = Math.PI / 180, dLat = (b[0] - a[0]) * r, dLon = (b[1] - a[1]) * r;
+  const h = Math.sin(dLat / 2) ** 2 + Math.cos(a[0] * r) * Math.cos(b[0] * r) * Math.sin(dLon / 2) ** 2;
+  return 12742 * Math.asin(Math.sqrt(h));
+}
+function trackKm_(pts) { let d = 0; for (let i = 1; i < pts.length; i++) d += km_(pts[i - 1], pts[i]); return d; }
+
+function trimEnds_(pts, km) {
+  const cut = (arr) => { let d = 0, i = 1; while (i < arr.length && d < km) { d += km_(arr[i - 1], arr[i]); i++; } return arr.slice(i - 1); };
+  return cut(cut(pts).reverse()).reverse();
+}
+
+function simplify_(pts, tol) {   // Douglas-Peucker
+  if (pts.length < 3) return pts;
+  const [y1, x1] = pts[0], [y2, x2] = pts[pts.length - 1];
+  const dx = x2 - x1, dy = y2 - y1, n = Math.hypot(dx, dy) || 1e-12;
+  let dmax = 0, idx = 0;
+  for (let i = 1; i < pts.length - 1; i++) {
+    const d = Math.abs(dy * pts[i][1] - dx * pts[i][0] + x2 * y1 - y2 * x1) / n;
+    if (d > dmax) { dmax = d; idx = i; }
+  }
+  if (dmax <= tol) return [pts[0], pts[pts.length - 1]];
+  return simplify_(pts.slice(0, idx + 1), tol).slice(0, -1).concat(simplify_(pts.slice(idx), tol));
+}
+
+function encodePolyline_(pts) {
+  let out = "", pLat = 0, pLon = 0;
+  const enc = (v) => { v = v < 0 ? ~(v << 1) : v << 1; let s = ""; while (v >= 0x20) { s += String.fromCharCode((0x20 | (v & 0x1f)) + 63); v >>= 5; } return s + String.fromCharCode(v + 63); };
+  pts.forEach(([lat, lon]) => {
+    const a = Math.round(lat * 1e5), b = Math.round(lon * 1e5);
+    out += enc(a - pLat) + enc(b - pLon); pLat = a; pLon = b;
+  });
+  return out;
+}
+
 /* ------------------------------------------------------------ road list */
 
+function roadNames_() {
+  try {
+    const geo = JSON.parse(UrlFetchApp.fetch(ROADS_URL).getContentText());
+    const names = geo.features.map((f) => f.properties.name).filter(Boolean);
+    if (names.length) return names;
+  } catch (err) {
+    Logger.log("Couldn't read " + ROADS_URL + ", using the built-in road list: " + err);
+  }
+  return DEFAULT_ROADS;
+}
+
 function refreshRoadChoices() {
-  if (!ROADS_URL) throw new Error("Set ROADS_URL at the top of the script first.");
-  const geo = JSON.parse(UrlFetchApp.fetch(ROADS_URL).getContentText());
-  const names = geo.features.map((f) => f.properties.name).filter(Boolean);
+  const names = roadNames_();
   const form = FormApp.openById(prop_("formId"));
   const item = form.getItems(FormApp.ItemType.LIST).find((it) => it.getTitle() === Q.road);
   item.asListItem().setChoiceValues(names.concat([OTHER_ROAD]));
