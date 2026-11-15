@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Kenya Road Reports</title>
+  <meta name="description" content="Community road condition reports for campers and overlanders in Kenya: when each road was last driven and what it was like.">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+  <link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <h1>Kenya Road Reports</h1>
+      <p>When each road was last driven, and what it was like. Shared by campers, for campers.</p>
+    </div>
+    <a id="add-update" class="btn btn-primary" href="#" target="_blank" rel="noopener" hidden>Add a road update</a>
+  </header>
+
+  <div id="demo-banner" class="banner" hidden>
+    Showing <strong>example entries</strong> so you can see how the map works. They are not real reports.
+    <a href="./">Hide examples</a>
+  </div>
+
+  <main class="layout">
+    <section class="map-wrap" aria-label="Map of roads">
+      <div id="map"></div>
+      <div class="legend" id="legend" aria-label="Legend"></div>
+    </section>
+
+    <aside class="panel" aria-label="Road list">
+      <div class="panel-controls">
+        <label class="search">
+          <span class="sr-only">Search roads</span>
+          <input id="search" type="search" placeholder="Search roads or places">
+        </label>
+        <label class="select">
+          <span>Show</span>
+          <select id="filter">
+            <option value="all">All roads</option>
+            <option value="reported">Roads with reports</option>
+            <option value="recent">Reported in last 30 days</option>
+          </select>
+        </label>
+      </div>
+      <p id="summary" class="summary"></p>
+      <ol id="road-list" class="road-list"></ol>
+      <div id="detail" class="detail" hidden></div>
+    </aside>
+  </main>
+
+  <footer class="footer">
+    <p>Reports are anonymous and moderated before they appear. Conditions change fast, especially after rain: always check locally before you set off. Road lines are approximate and not for navigation.</p>
+    <p><a href="#" id="toggle-demo">Show example entries</a><span id="repo-link"></span> · Map data © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> contributors</p>
+  </footer>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+  <script src="config.js"></script>
+  <script src="assets/app.js"></script>
+</body>
+</html>

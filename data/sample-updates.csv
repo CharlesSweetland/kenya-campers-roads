@@ -1,0 +1,6 @@
+date_driven,road,section,condition,vehicle,weather,update,photo_url,source
+2026-11-02,nairobi-magadi,Olorgesailie to Magadi,good,Saloon (2WD),Dry,"EXAMPLE ENTRY, NOT A REAL REPORT. Shows how a recent good-condition update looks.",,Example
+2026-10-20,kimana-chyulu-gate,Whole road,very_rough,4x4,Dry,"EXAMPLE ENTRY, NOT A REAL REPORT. Shows how a very rough road looks on the map.",,Example
+2026-08-14,archers-wamba-maralal,Wamba to Maralal,fair,4x4,Light rain,"EXAMPLE ENTRY, NOT A REAL REPORT. Older reports fade so you can see they may be out of date.",,Example
+2026-11-10,southhorr-loiyangalani,Near the lake,impassable,4x4,After heavy rain,"EXAMPLE ENTRY, NOT A REAL REPORT. Shows how a closed or washed-out section looks.",,Example
+2026-09-30,mariakani-kinango-kwale,Kinango to Kwale,rough,SUV (2WD/AWD),Dry,"EXAMPLE ENTRY, NOT A REAL REPORT.",,Example

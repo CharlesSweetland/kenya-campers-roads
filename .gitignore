@@ -1,0 +1,7 @@
+# Never commit chat exports or anything with members' details
+*.zip
+*.vcf
+*chat*.txt
+private/
+.DS_Store
+Thumbs.db
