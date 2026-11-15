@@ -19,7 +19,7 @@ The map exists to share what roads are like, not who drove them. These rules app
 
 1. **The maintainer's own notes.** That is all the prototype contains.
 2. **The Google Form.** Each submitter ticks a box giving permission to publish their update anonymously. A moderator reviews every one before it appears.
-3. **Past WhatsApp messages in the Kenya Campers group.** These are used only with the community's permission, given through the group admins. They are rewritten as short summaries, not quoted word for word, with every personal detail removed. Members can ask for any summary based on their messages to be removed.
+3. **Past WhatsApp messages in the Kenya Campers group.** These are used **only when the person who wrote them has said yes**. Each person is asked individually. Silence or no reply counts as no. Messages are rewritten as short summaries, not quoted word for word, with every personal detail removed. Anyone can change their mind later and ask for a summary to be removed.
 
 ## Photos
 
