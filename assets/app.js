@@ -79,13 +79,15 @@
     return pts.filter((p) => Math.abs(p[0]) <= 90 && Math.abs(p[1]) <= 180);
   }
 
+  // Gives up after 10 s so a slow or blocked Google Sheet can't stop the map from drawing.
   function loadCsv(url) {
     return new Promise((resolve) => {
+      const timer = setTimeout(() => { console.warn("Timed out loading", url); resolve([]); }, 10000);
       Papa.parse(url, {
         download: true, header: true, skipEmptyLines: true,
         transformHeader: (h) => norm(h).replace(/ /g, "_"),
-        complete: (r) => resolve(r.data || []),
-        error: () => { console.warn("Could not load", url); resolve([]); }
+        complete: (r) => { clearTimeout(timer); resolve(r.data || []); },
+        error: () => { clearTimeout(timer); console.warn("Could not load", url); resolve([]); }
       });
     });
   }

@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Road Report Analytics</title>
+  <meta name="description" content="How well Kenya's roads are covered by recent community reports, and what conditions people are finding.">
+  <link rel="stylesheet" href="assets/style.css">
+  <link rel="stylesheet" href="assets/analytics.css">
+</head>
+<body class="analytics">
+  <header class="topbar">
+    <div class="brand">
+      <h1>Kenya Road Reports: analytics</h1>
+      <p>How well the roads are covered, and what people are finding out there. Anonymous, approved reports only.</p>
+    </div>
+    <a class="btn" href="./">← Back to the map</a>
+  </header>
+
+  <div id="demo-banner" class="banner" hidden>
+    Including <strong>example entries</strong>. These charts aren't real data.
+    <a href="analytics.html">Hide examples</a>
+  </div>
+
+  <main class="dash">
+    <section class="kpis" id="kpis" aria-label="Headline numbers"></section>
+
+    <section class="card wide">
+      <header><h2>How fresh is each road?</h2><p>Days since each road was last driven, coloured by its latest condition. The dashed line marks <span class="stale-days"></span> days, after which a report may be out of date.</p></header>
+      <div class="chart" id="freshness"></div>
+    </section>
+
+    <section class="card wide">
+      <header><h2>Reports over time</h2><p>Reports per week by the date the road was driven, split by condition.</p></header>
+      <div class="chart" id="timeline"></div>
+    </section>
+
+    <section class="card">
+      <header><h2>Latest condition by region</h2><p>Each road counted once, by its most recent report.</p></header>
+      <div class="chart" id="regions"></div>
+    </section>
+
+    <section class="card">
+      <header><h2>What people were driving</h2><p>All reports, by vehicle and the condition they reported.</p></header>
+      <div class="chart" id="vehicles"></div>
+    </section>
+
+    <section class="card wide">
+      <header><h2>Where we need updates</h2><p>Roads with no report, or none in the last <span class="stale-days"></span> days. Driven one recently? Please add an update.</p></header>
+      <div id="gaps"></div>
+    </section>
+
+    <div class="legend-strip" id="legend" aria-label="Condition colours"></div>
+  </main>
+
+  <div class="tip" id="tip" role="tooltip" hidden></div>
+
+  <footer class="footer">
+    <p>Counts come from the same public, anonymised data as the map. No visitor tracking.</p>
+    <p><a href="#" id="toggle-demo">Show example entries</a> · <a href="./">Map</a></p>
+  </footer>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+  <script src="config.js"></script>
+  <script src="assets/analytics.js"></script>
+</body>
+</html>
